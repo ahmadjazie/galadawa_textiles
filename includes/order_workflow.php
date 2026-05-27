@@ -73,7 +73,7 @@ function ensure_hold_tables($conn) {
             released_at DATETIME DEFAULT NULL,
             completed_at DATETIME DEFAULT NULL,
             completed_sale_id INT(11) DEFAULT NULL,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
             INDEX idx_held_orders_status_release (status, release_at),
             INDEX idx_held_orders_user (user_id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
@@ -91,7 +91,7 @@ function ensure_hold_tables($conn) {
             buy_price_at_hold DECIMAL(10,2) DEFAULT NULL,
             subtotal DECIMAL(10,2) NOT NULL,
             image_preview VARCHAR(255) DEFAULT NULL,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
             INDEX idx_held_order_items_hold (hold_id),
             INDEX idx_held_order_items_product (product_id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
@@ -110,7 +110,7 @@ function ensure_exchange_tables($conn) {
             total_new_amount DECIMAL(10,2) NOT NULL,
             amount_difference DECIMAL(10,2) NOT NULL,
             note VARCHAR(255) DEFAULT NULL,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
             INDEX idx_exchange_transactions_sale (original_sale_id),
             INDEX idx_exchange_transactions_user (user_id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
@@ -133,7 +133,7 @@ function ensure_exchange_tables($conn) {
             new_price DECIMAL(10,2) NOT NULL,
             new_buy_price_snapshot DECIMAL(10,2) DEFAULT NULL,
             new_subtotal DECIMAL(10,2) NOT NULL,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
             INDEX idx_exchange_items_exchange (exchange_id),
             INDEX idx_exchange_items_sale_item (original_sale_item_id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4

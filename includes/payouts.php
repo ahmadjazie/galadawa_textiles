@@ -19,7 +19,7 @@ function ensure_payout_table($conn) {
             user_id INT NOT NULL,
             amount DECIMAL(10,2) NOT NULL,
             status ENUM('pending','approved','rejected') NOT NULL DEFAULT 'pending',
-            requested_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            requested_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
             reviewed_at DATETIME NULL,
             reviewed_by INT NULL,
             note VARCHAR(255) NULL,

@@ -1,7 +1,6 @@
 <?php
 session_start();
-include 'includes/db_connect.php';
-
+require_once 'includes/db_connect.php';
 $error = ""; 
 $login_success = false; 
 $redirect_url = "";
@@ -11,9 +10,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $pass_input = $_POST['password'];
     $pass_encrypted = md5($pass_input);
 
-    $sql = "SELECT * FROM users WHERE username = '$user_input' AND password = '$pass_encrypted'";
-    $result = $conn->query($sql);
-    if ($result->num_rows == 1) {
+  $sql = "SELECT * FROM users WHERE username = '$user_input' AND password = '$pass_encrypted'";
+$result = $conn->query($sql);
+
+if ($result && $result->num_rows == 1) {
         $row = $result->fetch_assoc();
         
         // CHECK IF SUSPENDED
