@@ -21,10 +21,12 @@ if(empty($_SESSION['cart'])): ?>
             </div>
             <div class="cart-item-side">
                 <div class="cart-item-total">₦<?php echo number_format($item['subtotal']); ?></div>
-                <form method="POST" style="display:inline;">
-                    <input type="hidden" name="action" value="remove">
+                <form method="POST" class="cart-remove-form" style="display:inline;">
+                    <input type="hidden" name="action" value="remove_ajax">
                     <input type="hidden" name="cart_id" value="<?php echo $key; ?>">
-                    <button class="cart-remove-btn">&times;</button>
+                    <input type="hidden" name="product_id" value="<?php echo (int)($item['id'] ?? 0); ?>">
+                    <input type="hidden" name="product_image_id" value="<?php echo !empty($item['product_image_id']) ? (int)$item['product_image_id'] : (!empty($item['cap_img_id']) ? (int)$item['cap_img_id'] : ''); ?>">
+                    <button class="cart-remove-btn" type="submit" aria-label="Remove item from cart">&times;</button>
                 </form>
             </div>
         </div>

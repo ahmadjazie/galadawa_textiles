@@ -219,7 +219,12 @@ if (isset($_POST['action']) && $_POST['action'] == 'remove_ajax') {
     }
 
     if ($removed_key !== '' && isset($_SESSION['cart'][$removed_key])) {
+        $removed_item = $_SESSION['cart'][$removed_key];
         $removed_qty = (float)($_SESSION['cart'][$removed_key]['qty'] ?? 0);
+        $product_id = (int)($removed_item['id'] ?? $product_id);
+        $product_image_id = !empty($removed_item['product_image_id'])
+            ? (int)$removed_item['product_image_id']
+            : (!empty($removed_item['cap_img_id']) ? (int)$removed_item['cap_img_id'] : $product_image_id);
         unset($_SESSION['cart'][$removed_key]);
     }
 
@@ -230,6 +235,8 @@ if (isset($_POST['action']) && $_POST['action'] == 'remove_ajax') {
         'cart_html' => build_pos_cart_html(),
         'total' => number_format($total),
         'removed_qty' => $removed_qty,
+        'removed_product_id' => $product_id,
+        'removed_product_image_id' => $product_image_id,
     ]);
     exit();
 }
@@ -593,7 +600,7 @@ if (isset($_POST['action'])) {
             letter-spacing: 0.12em;
             text-shadow: 0 1px 0 rgba(255,255,255,0.5);
         }
-        .variant-option { text-align: left; background: #fff; }
+        .variant-option { width: 100%; text-align: left; background: #fff; appearance: none; font: inherit; }
         .variant-option-body { padding: 10px; }
         .variant-color { font-weight: 800; color: #24303d; font-size: 13px; margin-bottom: 3px; }
         .variant-yards { color: #1e3c72; font-weight: 700; font-size: 12px; }
@@ -869,7 +876,11 @@ if (isset($_POST['action'])) {
             });
         }
 
-        function selectTextileVariant(prodId, variantId, yards) {
+        function selectTextileVariant(event, prodId, variantId, yards) {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
             Swal.close();
             promptYardsForProduct(prodId, Number(yards || 0), variantId);
         }
@@ -933,15 +944,15 @@ if (isset($_POST['action'])) {
                             const heldClass = isHeld ? ' held' : '';
                             const clickHandler = isHeld
                                 ? 'showHeldNotice()'
-                                : `selectTextileVariant(${id}, ${Number(variant.id)}, ${yards})`;
+                                : `selectTextileVariant(event, ${id}, ${Number(variant.id)}, ${yards})`;
                             html += `
-                                <div class="cap-option variant-option${heldClass}" onclick="${clickHandler}">
+                                <button type="button" class="cap-option variant-option${heldClass}" onclick="${clickHandler}">
                                     <img src="${src}" onerror="this.src='../img/logo.png'">
                                     <div class="variant-option-body">
                                         <div class="variant-color">${escapeHtml(color)}</div>
                                         <div class="variant-yards">${isHeld ? 'On hold' : `${yards} yards left`}</div>
                                     </div>
-                                </div>
+                                </button>
                             `;
                         });
                         html += '</div>';
@@ -973,11 +984,12 @@ if (isset($_POST['action'])) {
             submitViaAjax(prodId, 1, imgId, imgSrc);
         }
 
-        function removeViaAjax(productId, productImageId, afterRemove = null) {
+        function removeViaAjax(productId, productImageId, afterRemove = null, cartId = '') {
             const formData = new FormData();
             formData.append('action', 'remove_ajax');
-            formData.append('product_id', productId);
-            formData.append('product_image_id', productImageId);
+            if (cartId) formData.append('cart_id', cartId);
+            if (productId) formData.append('product_id', productId);
+            if (productImageId) formData.append('product_image_id', productImageId);
 
             fetch('pos.php', { method: 'POST', body: formData })
                 .then(r => r.json())
@@ -986,16 +998,38 @@ if (isset($_POST['action'])) {
                     document.getElementById('cartContainer').innerHTML = data.cart_html;
                     document.getElementById('grandTotal').innerText = 'Total: ₦' + data.total;
                     const removedQty = Number(data.removed_qty || 0);
-                    const stockLabel = document.getElementById('stock_display_' + productId);
+                    const resolvedProductId = Number(data.removed_product_id || productId || 0);
+                    const resolvedImageId = Number(data.removed_product_image_id || productImageId || 0);
+                    const stockLabel = document.getElementById('stock_display_' + resolvedProductId);
                     if (stockLabel && removedQty > 0) {
                         const currentVal = parseFloat(stockLabel.getAttribute('data-stock'));
-                        setProductStockState(productId, currentVal + removedQty);
+                        setProductStockState(resolvedProductId, currentVal + removedQty);
+                    }
+                    if (resolvedImageId) {
+                        selectedCapIds.delete(resolvedImageId);
                     }
                     if (typeof afterRemove === 'function') afterRemove();
                     if (window.showToast) {
                         showToast("Removed from cart", { type: "info", duration: 1500 });
                     }
                 });
+        }
+
+        const cartContainer = document.getElementById('cartContainer');
+        if (cartContainer) {
+            cartContainer.addEventListener('submit', function(event) {
+                const form = event.target.closest('.cart-remove-form');
+                if (!form) return;
+
+                event.preventDefault();
+                const formData = new FormData(form);
+                removeViaAjax(
+                    Number(formData.get('product_id') || 0),
+                    Number(formData.get('product_image_id') || 0),
+                    null,
+                    String(formData.get('cart_id') || '')
+                );
+            });
         }
 
         function submitViaAjax(id, qty, capImgId = null, capImgSrc = null, productImageId = null) {
